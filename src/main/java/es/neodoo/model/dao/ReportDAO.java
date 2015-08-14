@@ -1,26 +1,28 @@
 package es.neodoo.model.dao;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import com.mysql.jdbc.Statement;
-import es.neodoo.model.vo.TeacherVO;
-import es.neodoo.model.vo.UserTeacherVO;
-import es.neodoo.service.OperationDB;
 import org.hibernate.Session;
+import es.neodoo.model.vo.User;
+import es.neodoo.model.vo.UserTeacher;
+import es.neodoo.service.OperationDB;
+import es.neodoo.util.HibernateUtil;
 
 public class ReportDAO extends OperationDB {
+	
 	private Connection conexion = null;
+	
 	private OperationDB operationDB = null;
 
-	public List<TeacherVO> getLstTeacher() {
+	public List<User> getLstTeacher() {
 
-		List<TeacherVO> teachers = new ArrayList();
+		List<User> teachers = new ArrayList();
+		
 		try {
-
 			// Se realiza la consulta. Los resultados se guardan en el
 			Statement s = (Statement) conexion.createStatement();
 
@@ -29,9 +31,9 @@ public class ReportDAO extends OperationDB {
 			// Se recorre el ResultSet, mostrando por pantalla los resultados.
 			while (rs.next()) {
 
-				TeacherVO teacher = null;
+				User teacher = null;
 
-				//teacher = new TeacherVO(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4));
+				teacher = new User(rs.getString(1), rs.getString(3), rs.getString(4));
 				teachers.add(teacher);
 
 			}
@@ -44,53 +46,33 @@ public class ReportDAO extends OperationDB {
 	}
 
 	public void insertTeachers() {
-		System.out.println("Hibernate one to one (Annotation)");
-		Session session = HibernateUtil.getSessionFactory().openSession();
-
-		session.beginTransaction();
-
-		TeacherVO teacher = new TeacherVO();
-
-		teacher.setId(1);
-		teacher.setNombre("aaa");
-		teacher.setApellidos("bbb");
-		teacher.setDni("123456789K");
-
-		UserTeacherVO userTeachersVO = new UserTeacherVO();
-		userTeachersVO.setId(1);
-		userTeachersVO.setCentro("Salesianos");
-		userTeachersVO.setAsignatura("Matematicas");
-		
-
-		teacher.setUserTeachersVO(userTeachersVO);
-
-		session.save(teacher);
-		session.getTransaction().commit();
-
-		System.out.println("Done");
-		
-	}
-
-	public void deleteData() {
-
 		try {
-			// Se realiza la consulta. Los resultados se guardan en el
-			Statement s1 = (Statement) conexion.createStatement();
+			Session session = HibernateUtil.getSessionFactory().openSession();
+	        
+	        session.beginTransaction();
 
-			boolean delete = s1.execute("DELETE FROM user WHERE nombre = 'fernando';");
+	        User teacher = new User();
 
-			if (delete == false) {
-				System.out.println("Se ha realizado correctamente el borrado de los datos en la tabla USER");
-			} else {
-				System.out.println("NO se ha realizado correctamente el borrado de los datos en la tabla USER");
-			}
+			teacher.setId(1);
+			teacher.setNombre("aaa");
+			teacher.setApellidos("bbb");
+			teacher.setDni("123456789K");
 
-			// Se cierra la conexión con la base de datos.
+			UserTeacher userTeachersVO = new UserTeacher();
+			userTeachersVO.setId(1);
+			userTeachersVO.setCentro("Salesianos");
+			userTeachersVO.setAsignatura("Matematicas");
 
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			teacher.getUserTeachers().add(userTeachersVO);
+			
+			session.save(teacher);
+			session.getTransaction().commit();
+			
+		} catch (Throwable ex) {
+			System.err.println("Failed to create sessionFactory object." + ex);
+			throw new ExceptionInInitializerError(ex);
 		}
+		System.out.println("insert complete");
 	}
 
 	public void initConection() {
@@ -102,4 +84,26 @@ public class ReportDAO extends OperationDB {
 	public void closeConection() {
 		operationDB.desconectar(conexion);
 	}
+
+	public void CallableStatement() {
+
+		try {
+			// Creamos la conexion
+			conexion.setAutoCommit(false);
+
+			java.sql.CallableStatement cStmt = conexion.prepareCall("{CALL get_user_teacher(?,?)}");
+			cStmt.setString(1, "Salesianos");
+			cStmt.registerOutParameter(2, java.sql.Types.INTEGER);
+
+			// execute getDBUSERByUserId store procedure
+			cStmt.executeUpdate();
+
+			int resultado = cStmt.getInt(2);
+			System.out.println("El resultado de la llamada es: "+resultado);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 }

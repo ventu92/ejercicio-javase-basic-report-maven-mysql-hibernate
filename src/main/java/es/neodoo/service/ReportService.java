@@ -3,7 +3,7 @@ package es.neodoo.service;
 import java.util.List;
 
 import es.neodoo.model.dao.ReportDAO;
-import es.neodoo.model.vo.TeacherVO;
+import es.neodoo.model.vo.User;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRExporter;
 import net.sf.jasperreports.engine.JRExporterParameter;
@@ -23,15 +23,16 @@ public class ReportService {
 		reportDAO.initConection();
 		//doReport(teachers);
 		reportDAO.insertTeachers();
-		reportDAO.deleteData();
+		//reportDAO.deleteData();
+		//reportDAO.CallableStatement();
 		reportDAO.closeConection();
 	
 		// Generamos el informe con el listado obtenido
-		List<TeacherVO> teachers = reportDAO.getLstTeacher();
+		List<User> teachers = reportDAO.getLstTeacher();
 
 	}
 
-	public void doReport(List<TeacherVO> teachers) {
+	public void doReport(List<User> teachers) {
 
 		JasperReport reporte;
 		
